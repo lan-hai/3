@@ -5,10 +5,10 @@
 
 float calculate_expression(const char*expression){
     int num1,num2;
-    char op
+    char op;
 
 
-if (sscanf(expression, "%lf%c%lf", &num1, &op, &num2) >= 2) {
+if (sscanf(expression, "%d%c%d", &num1, &op, &num2) >= 2) {
         switch (op) {
             case '+': return num1 + num2;
             case '-': return num1 - num2;
@@ -25,7 +25,7 @@ int calculate_handler(struct mg_connection *conn, void *cbdata) {
     
     char expr[256];
     if (mg_get_var(conn, "expr", expr, sizeof(expr)) > 0) {
-        double result = calculate_expression(expr);
+        float result = calculate_expression(expr);
         char response[256];
         
         if (isnan(result)) {
@@ -54,7 +54,7 @@ int calculate_handler(struct mg_connection *conn, void *cbdata) {
 int home_handler(struct mg_connection *conn, void *cbdata) {
     const char *page = "<html><body>"
                       "<h1>Calculator Server</h1>"
-                      "<p>Usage: /calculate?expr=2+3</p>"
+                      "<p>Usage: /ping?expr=2+3</p>"
                       "</body></html>";
     
     mg_printf(conn, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n%s", page);
@@ -79,8 +79,8 @@ int main() {
     }
     
     
-    mg_set_request_handler(ctx, "/calculate", calculate_handler, NULL);
-    mg_set_request_handler(ctx, "/$", home_handler, NULL);
+    mg_set_request_handler(ctx, "/ping", calculate_handler, NULL);
+    mg_set_request_handler(ctx, "/", home_handler, NULL);
     
     printf("Calculator server running on http://localhost:8080\n");
     printf("Press Enter to stop...\n");
