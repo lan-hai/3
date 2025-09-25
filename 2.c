@@ -3,40 +3,40 @@
 #include<string.h>
 #include<math.h>
 
-float calculate_expression(const char*expression){
-    int num1,num2;
+double calculate_expression(const char*expression){
+    double num1,num2;
     char op;
 
 
-if (sscanf(expression, "%d%c%d", &num1, &op, &num2) >= 2) {
+if (sscanf(expression, "%lf%c%lf", &num1, &op, &num2) == 2) {
         switch (op) {
             case '+': return num1 + num2;
             case '-': return num1 - num2;
             case '*': return num1 * num2;
-            case '/': return num2 != 0 ? num1 / num2 : NAN;
-            default: return NAN;
+            case '/': return num2 != 0 ? num1 / num2 : 0;
+            default: return 0;
         }
 }
-   return NAN;
+   return 0;
 }
 int calculate_handler(struct mg_connection *conn, void *cbdata) {
-    const struct mg_request_info *req_info = mg_get_request_info(conn);
+    const struct mg_request_info *information = mg_get_request_info(conn);
     
     
     char expr[256];
-    if (mg_get_var(conn, "expr", expr, sizeof(expr)) > 0) {
-        float result = calculate_expression(expr);
-        char response[256];
+    if (mg_get_var(information->query_string, strlen(information->query_string), "expression", expression, sizeof(expression)) > 0) {
+        double result = calculate(expression);
+        char response[512];
         
         if (isnan(result)) {
             snprintf(response, sizeof(response), 
-                    "{\"error\": \"Invalid expression: %s\"}", expr);
+                    "{\"error\": \"Invalid expression: %s\"}", expression);
             mg_printf(conn, "HTTP/1.1 400 Bad Request\r\n"
                       "Content-Type: application/json\r\n"
                       "Access-Control-Allow-Origin: *\r\n\r\n%s", response);
         } else {
             snprintf(response, sizeof(response), 
-                    "{\"expression\": \"%s\", \"result\": %.6f}", expr, result);
+                    "{\"expression\": \"%s\", \"result\": %.6f}", expression, result);
             mg_printf(conn, "HTTP/1.1 200 OK\r\n"
                       "Content-Type: application/json\r\n"
                       "Access-Control-Allow-Origin: *\r\n\r\n%s", response);
@@ -44,7 +44,7 @@ int calculate_handler(struct mg_connection *conn, void *cbdata) {
     } else {
         mg_printf(conn, "HTTP/1.1 400 Bad Request\r\n"
                   "Content-Type: application/json\r\n\r\n"
-                  "{\"error\": \"Missing expr parameter\"}");
+                  "{\"error\": \"Missing expression parameter\"}");
     }
     
     return 1; 
@@ -54,7 +54,7 @@ int calculate_handler(struct mg_connection *conn, void *cbdata) {
 int home_handler(struct mg_connection *conn, void *cbdata) {
     const char *page = "<html><body>"
                       "<h1>Calculator Server</h1>"
-                      "<p>Usage: /ping?expr=2+3</p>"
+                      "<p>Usage: /ping?expression=2+3</p>"
                       "</body></html>";
     
     mg_printf(conn, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n%s", page);
